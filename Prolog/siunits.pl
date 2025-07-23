@@ -1,47 +1,90 @@
 %%%% 990418 John Zaydan
 
 
-% unit(symbol, name, {base, derived})
-% -------------------------------------------------------------------
-unit(kg,  kilogram, kg,  base).
-unit(m,   metre,    m,   base).
-unit(s,   second,   s,   base).
-unit('A', 'Ampere', 'A', base).
-unit('K', 'Kelvin', 'K', base).
-unit(cd,  candela,  cd,  base).
-unit(mol, mole,     mol, base).
+%%% unit(+Symbol, +Name, +Definition, +Type).
+%%% -------------------------------------------------------------------
+unit(kg,      kilogram,        kg,  					base).
+unit(m,       metre,           m,   					base).
+unit(s,       second,   	   s,   					base).
+unit('A',     'Ampere',        'A', 					base).
+unit('K',     'Kelvin',        'K', 					base).
+unit(cd,      candela,         cd,  					base).
+unit(mol,     mole,            mol, 					base).
 
-% 0 == da fare ancora
--------------------------------------------------------------------
-unit('Bq',    'Becquerel',     s ** -1,          derived).
-unit(dc,      degreecelsius,   'K',              derived).
-unit('C',     'Coulomb',       0,                derived).
-unit('F',     'Farad',         0,                derived).
-unit('Gy',    'Gray',          0,                derived).
-unit('Hz',    'Hertz',         s ** -1,          derived).
-unit('H',     'Henry',         0,                derived).
-unit('J',     'Joule',         0,                derived).
-unit(kat,     'Katal',         0,                derived).
-unit(lm,      lumen,           cd * sr,          derived).
-unit(lx,      lux,             lm * m ** -2,     derived).
-unit('N',     'Newton',        kg * m * s ** -2, derived).
-unit('Omega', 'Ohm',           0,                derived).
-unit('Pa',    'Pascal',        0,                derived).
-unit(rad,     radian,          0,                derived).
-unit('S',     'Siemens',       0,                derived).
-unit('Sv',    'Sievert',       0,                derived).
-unit(sr,      steradian,       1,                derived).
-unit('T',     'Tesla',         0,                derived).
-unit('V',     'Volt',          0,                derived).
-unit('W',     'Watt',          0,                derived).
-unit('Wb',    'Weber',         0,                derived).
+unit('Bq',    'Becquerel',     s ** -1,          		derived).
+unit(dc,      degreecelsius,   'K',              		derived).
+unit('C',     'Coulomb',       'A' * s,                	derived).
+unit('F',     'Farad',         'C' * ('V' ** -1),       derived).
+unit('Gy',    'Gray',          'J' * (kg ** -1),        derived).
+unit('Hz',    'Hertz',         s ** -1,          		derived).
+unit('H',     'Henry',         'V' * s * ('A' ** -1),   derived).
+unit('J',     'Joule',         m * 'N',                 derived).
+unit(kat,     'Katal',         mol * (s ** -1),         derived).
+unit(lm,      lumen,           cd * sr,          	    derived).
+unit(lx,      lux,             lm * (m ** -2),     	    derived).
+unit('N',     'Newton',        kg * m * (s ** -2), 	    derived).
+unit('Omega', 'Ohm',           'V' * ('A' ** -1),       derived).
+unit('Pa',    'Pascal',        'N' * (m ** -2),         derived).
+unit(rad,     radian,          1,                		derived).
+unit('S',     'Siemens',       'Omega' ** -1,           derived).
+unit('Sv',    'Sievert',       'J' * (kg ** -1),        derived).
+unit(sr,      steradian,       1,                       derived).
+unit('T',     'Tesla',         'Wb' * (m ** -2),        derived).
+unit('V',     'Volt',          'J' * ('C' ** -1),       derived).
+unit('W',     'Watt',          'J' * (s ** -1),         derived).
+unit('Wb',    'Weber',         'V' * s,                 derived).
 % -------------------------------------------------------------------
 
-is_base_si_unit(S) :- unit(S, _, base).
+
+% Symbols
+% -------------------------------------------------------------------
+is_base_si_unit(S) :- unit(S, _, _, base).
 
 is_si_unit(S) :- is_base_si_unit(S).
-is_si_unit(S) :- unit(S, _, derived).
+is_si_unit(S) :- unit(S, _, _, derived).
 
+si_unit_name(S, N) :-
+	unit(S, N, _, _).
+
+si_unit_symbol(N, S) :-
+	unit(S, N, _, _).
+
+si_unit_base_expansion(S, Expansion) :-
+	unit(S, _, Es, _),
+	obn(Es, Expansion).
+
+obn(X, Y) :-
+	unit(X, _, H, derived),
+	obn(H, Y).
+
+obn(X, X) :-
+	unit(X, _, X, base).
+
+obn(X * Y, Z * K) :-
+	obn(X, Z),
+	obn(Y, K),
+
+obn(X ** N, Z ** N) :-
+	obn(X, Z),
+	number(N).
+	
+
+o3(Expr) :- is_base_si_unit(Expr).
+
+o3(Expr) :-
+	unit(Expr, _, Dev, derived),
+	o3(Dev).
+	
+o3(X * Y) :-
+	o3(X),
+	o3(Y).	
+	
+o3(X ** N) :-
+	o3(X),
+	number(N).
+	 
+% -------------------------------------------------------------------
+	
 
 % Dimension & Quantity
 % -------------------------------------------------------------------
