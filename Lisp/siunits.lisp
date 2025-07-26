@@ -1,1 +1,46 @@
-;;;; 990418 John Zaydan
+(defparameter *units*
+  '((:name kg  :long-name kilogram    :symbol kg                          :type :base    :id 1)
+    (:name m   :long-name metre       :symbol m                           :type :base    :id 2)
+    (:name s   :long-name second      :symbol s                           :type :base    :id 3)
+    (:name A   :long-name ampere      :symbol A                           :type :base    :id 4)
+    (:name K   :long-name kelvin      :symbol K                           :type :base    :id 5)
+    (:name cd  :long-name candela     :symbol cd                          :type :base    :id 6)
+    (:name mol :long-name mole        :symbol mol                         :type :base    :id 7)
+
+    ;; unità derivate
+    (:name N   :long-name newton      :symbol (* kg m (expt s -2))        :type :derived :id 8)
+    (:name Pa  :long-name pascal      :symbol (/ N (expt m 2))            :type :derived :id 9)
+    (:name J   :long-name joule       :symbol (* N m)                     :type :derived :id 10)
+    (:name W   :long-name watt        :symbol (/ J s)                     :type :derived :id 11)
+    (:name C   :long-name coulomb     :symbol (* A s)                     :type :derived :id 12)
+    (:name V   :long-name volt        :symbol (/ W A)                     :type :derived :id 13)
+    (:name F   :long-name farad       :symbol (/ C V)                     :type :derived :id 14)
+    (:name Ω   :long-name ohm         :symbol (/ V A)                     :type :derived :id 15)
+    (:name S   :long-name siemens     :symbol (/ 1 Ω)                     :type :derived :id 16)
+    (:name Wb  :long-name weber       :symbol (/ J A)                     :type :derived :id 17)
+    (:name 'T   :long-name tesla       :symbol (/ Wb (expt m 2))           :type :derived :id 18)
+    (:name H   :long-name henry       :symbol (/ Wb A)                    :type :derived :id 19)
+    (:name lx  :long-name lux         :symbol (/ cd (expt m 2))           :type :derived :id 20)
+    (:name Bq  :long-name becquerel   :symbol (/ 1 s)                     :type :derived :id 21)
+    (:name Gy  :long-name gray        :symbol (/ J kg)                    :type :derived :id 22)
+    (:name Sv  :long-name sievert     :symbol (/ J kg)                    :type :derived :id 23)
+    (:name kat :long-name katal       :symbol (/ mol s)                   :type :derived :id 24)
+    (:name Hz  :long-name hertz       :symbol (/ 1 s)                     :type :derived :id 25)
+    (:name rad :long-name radian      :symbol 1                            :type :derived :id 26)
+    (:name sr  :long-name steradian   :symbol 1                            :type :derived :id 27)
+    (:name L   :long-name liter       :symbol (* (expt 10 -3) (expt m 3)) :type :derived :id 28)
+    (:name bar :long-name bar         :symbol (* 1e5 Pa)                  :type :derived :id 29)))
+    
+    
+(defun is-quantity (q)
+	(and (listp q)
+		(eq ’q (first q))
+			(let ((n (second q)) (d (third q)))
+					(and (numberp n)
+					(is-dimension d))
+			)
+	)
+)
+
+
+(is-quantity 100 'rad)
