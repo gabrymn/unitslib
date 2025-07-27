@@ -298,7 +298,7 @@ play(q(V, PreUnit), q(VNew, BaseUnit)) :-
     unit(BaseUnit, _, _, _, _),
     VNew is V * Factor, !.
 
-	
+	    (let ((res (Q (* (q-val Q1) (q-val Q2)) (q-dim Q1)    )))
 qadd(q(V1, D1), q(V2, D2), q(VR, DR)) :-
 
     play(q(V1, D1), q(V1_R, D1_R)),

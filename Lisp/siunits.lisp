@@ -1,6 +1,5 @@
 (defparameter *units*
   '(
-    ;; unità base
     (|kg|    kilogram         |kg|                       :base    1)
     (|m|     metre            |m|                        :base    2)
     (|s|     second           |s|                        :base    3)
@@ -8,8 +7,6 @@
     (|K|     Kelvin           |K|                        :base    5)
     (|cd|    candela          |cd|                       :base    6)
     (|mol|   mole             |mol|                      :base    7)
-
-    ;; unità derivate
     (|Bq|    Becquerel        (expt |s| -1)              :derived 8)
     (|dc|    degreecelsius    |K|                        :derived 9)
     (|C|     Coulomb          (* |A| |s|)                :derived 10)
@@ -44,18 +41,92 @@
 (defconstant +type+ 3)
 (defconstant +id+ 4)
 
- 
- 
- 
-(defun is-quantity (q)
-	(and (listp q)
-		(eq 'q (first q))
-			(let ((n (second q)) (d (third q)))
-					(and (numberp n)
-					(is-dimension d))
-			)
-	)
+
+(defparameter *prefixes*
+  '((|Y| . 1000000000000000000000000) 
+    (|Z| . 1000000000000000000000)    
+    (|E| . 1000000000000000000)      
+    (|P| . 1000000000000000)        
+    (|T| . 1000000000000)            
+    (|G| . 1000000000)                
+    (|M| . 1000000)                   
+    (|k| . 1000)
+    (|h| . 100)
+    (|da| . 10)
+    (|d| . 1/10)
+    (|c| . 1/100)
+    (|m| . 1/1000)
+    (|u| . 1/1000000)
+    (|n| . 1/1000000000)
+    (|p| . 1/1000000000000)
+    (|f| . 1/1000000000000000)
+    (|a| . 1/1000000000000000000)
+    (|z| . 1/1000000000000000000000)
+    (|y| . 1/1000000000000000000000000)))
+
+(defun prefix-names ()
+	(mapcar #'car *prefixes*))
+
+(defun prefix-free (U)
+  (cond 
+    ((si-unit-name U) U)
+    (t 
+     (let ((prefix-value (prefix-match U)))
+       (if prefix-value
+           (reduce-symbol (len-symbol prefix-value) U)
+           U)))))
+           
+(defun prefix-free-p (symbol)
+	(null (prefix-match symbol)))
+
+(defun len-symbol (symbol)
+	(length (symbol-name symbol))
 )
+
+; ---- MANCA ----
+(defun prefix-symbol (prefix-symbol target-symbol &key (test #'char=))
+  "Se PREFIX-SYMBOL è un prefisso del nome di TARGET-SYMBOL, restituisce il simbolo del prefisso; altrimenti NIL."
+  (let* ((prefix-str (symbol-name prefix-symbol))
+         (target-str (symbol-name target-symbol))
+         (plen (length prefix-str))
+         (tlen (length target-str)))
+    (if (and (<= plen tlen)
+             (every test prefix-str target-str))
+        (intern prefix-str) ; restituisce il prefisso come simbolo
+        nil)))
+
+; ---- MANCA ----
+(defun prefix-match (symbol &optional (prefixi (prefix-names)))
+  "Versione ricorsiva: restituisce il primo prefisso che è prefisso di SYMBOL, usando prefix-symbol."
+  (cond
+    ((null prefixi) nil) ; fine lista, nessun match
+    (t
+     (let ((result (prefix-symbol (car prefixi) symbol)))
+       (if result
+           result
+           (prefix-match symbol (cdr prefixi)))))))
+
+
+
+; ---- MANCA ----
+(defun reduce-symbol (n simbolo)
+  "Rimuove i primi N caratteri dal nome di SIMBOLO e restituisce un nuovo simbolo."
+  (let* ((nome (symbol-name simbolo))
+         (lunghezza (length nome))
+         (nuovo-nome (if (<= n lunghezza)
+                         (subseq nome n)
+                         "")))  ; se n > lunghezza ritorna stringa vuota
+    (intern nuovo-nome))
+)
+
+
+
+(defun is-quantity (Q)
+	(and (listp Q)
+		(eq 'q (first Q))
+			(let ((n (second Q)) (d (third Q)))
+					(and (numberp n)
+					(is-dimension d)))))
 
 (defun unit-symbols ()
   (mapcar (function first) *units*)
@@ -81,7 +152,7 @@
 	)
 )
 
-
+; ---- MANCA ----
 (defun is-dimension (d)
   (let ((symbols (unit-symbols)))
     (cond
@@ -138,16 +209,18 @@
 	)
 )
 
+; ---- MANCA ----
 (defun compare-units (u1 u2)
-  (let ((id1 (si-unit-id u1))
-        (id2 (si-unit-id u2)))
+  (let ((id1 (si-unit-id (prefix-free u1)))
+        (id2 (si-unit-id (prefix-free u2))))
     (cond
       ((or (null id1) (null id2))
        (error "Unità non trovata"))
       ((< id1 id2) '<)
       ((> id1 id2) '>)
       (t '=))))
-      
+
+; ---- MANCA ----
 (defun flatten-dim (dim)
   "Ritorna una lista piatta di termini, espandendo prodotti."
   (cond
@@ -164,6 +237,7 @@
     (t (error "Dimensione non valida ~a" dim))))
 
 
+; ---- MANCA ----
 (defun upd-exp (unit exp acc)
   "Aggiorna la lista acc sommando exp all'esponente di unit se presente."
 	(cond
@@ -185,6 +259,7 @@
 	)
 )
 
+; ---- MANCA ----
 (defun agg-exp (terms acc)
 	"Aggrega ricorsivamente i termini (unit exp) in acc."
 	(if (null terms)
@@ -195,10 +270,12 @@
 	)
 )
 
+; ---- MANCA ----
 (defun sum-exp (terms)
   "Somma gli esponenti di unità uguali nella lista terms."
   (agg-exp terms nil))
 
+; ---- MANCA ----
 (defun aggregate-exponents (terms)
   "Data una lista di (unit exp), somma gli esponenti di unità uguali."
   (let ((table (make-hash-table :test #'eq)))
@@ -209,13 +286,17 @@
     (remove-if (lambda (ue) (= (second ue) 0))
                (loop for k being the hash-keys of table
                      collect (list k (gethash k table))))))
-        
+
+; ---- MANCA ----
+
 (defun norm (dim)
+    
 	(let* 
 		((terms (flatten-dim dim))
 		 (agg (aggregate-exponents terms))
 		 (sorted (sort agg #'(lambda (a b)
-		 (eq (compare-units (first a) (first b)) '<))))
+		 	(eq (compare-units (first a) (first b)) '<))))
+		 
 		 (build-term 
 			(lambda (ue)
 				(let ((unit (first ue))
@@ -231,268 +312,159 @@
 			))
 )
 
-
-(defun q (n d)
-  (list 'q n (norm d))
-)
-
-
-(defun qnegate (q)
-  (unless (is-quantity q)
-    (error "ERROR: Invalid argument"))
-  (let ((n (second q))
-        (d (third q)))
-    (list 'Q (- n)  d))
-)
-
-
-(defun qinverse (q)
-  (unless (is-quantity q)
-    (error "ERROR: Invalid argument"))
-  (let ((n (second q))
-        (d (third q)))
-    (list 'Q (/ 1 n)  (norm (list 'expt d -1)))
-   )
-) 
-
-(defparameter q1 (q 42 '|m|))
-
-(defparameter q2 (q 1/2 '(* (expt |s| 3) (expt |m| -3))))
-
-(defun qadd (q1 q2)
-
-  (unless (and (is-quantity q1) (is-quantity q2))
-    (error "ERROR: At least one of the two arguments is not a valid quantity"))
-
-  (let ((n1 (second q1)) (d1 (third q1)) (n2 (second q2)) (d2 (third q2)))
-        
-    (let ((nd1 (norm d1))
-          (nd2 (norm d2)))
-          
-      (if (equal nd1 nd2)
-          
-          (let ((res (list 'Q (+ n1 n2) nd1)))
-            (if (is-quantity res)
-                res
-                (error "ERROR: The result is not a valid quantity ~A" res)))
-          
-          (error "ERROR: Incompatible dimensions ~A and ~A" nd1 nd2)))
-  )
-)
-
-
-(defun qsub (q1 q2)
-  (qadd q1 (qnegate q2))
-)
-
-
-(defun qmul (q1 q2)
-  (unless (and (is-quantity q1) (is-quantity q2))
-    (error "ERROR: At least one of the two arguments is not a valid quantity"))
-
-  (let ((n1 (second q1))
-        (d1 (third q1))
-        (n2 (second q2))
-        (d2 (third q2)))
-    (let ((new-n (* n1 n2))
-          (new-d (norm (list '* d1 d2))))
-      (let ((res (list 'Q new-n new-d)))
-        (unless (is-quantity res)
-          (error "ERROR: The result is not a valid quantity ~A" res))
-        res))))
-        
-;(print (qmul q1 q2))    
-        
-(defun qdiv (q1 q2)
-  (unless (is-quantity q2)
-    (error "ERROR: Divider is not a valid quantity"))
-  (when (= (second q2) 0)
-    (error "ERROR: Division by zero"))
-  (qmul q1 (qinverse q2))
-)
-
-;;(print (qadd q1 q2))        
-        
-(defun qexp (q n)
-  (unless (and (is-quantity q) (numberp n))
-    (error "ERROR: Invalid arguments"))
-  (let ((val (second q)) (dim (third q)))
-  	(list 'Q (expt val n) (norm (list 'expt dim n)))
-  )
-)
-
-
-
-
-(defparameter *prefixes*
-  '(("Y" . 1e24)
-    ("Z" . 1e21)
-    ("E" . 1e18)
-    ("P" . 1e15)
-    ("T" . 1e12)
-    ("G" . 1e9)
-    ("M" . 1e6)
-    ("k" . 1e3)
-    ("h" . 1e2)
-    ("da" . 1e1)
-    ("d" . 1e-1)
-    ("c" . 1e-2)
-    ("m" . 1e-3)
-    ("u" . 1e-6)
-    ("n" . 1e-9)
-    ("p" . 1e-12)
-    ("f" . 1e-15)
-    ("a" . 1e-18)
-    ("z" . 1e-21)
-    ("y" . 1e-24)))
-
-
-(defun contains (elem lst test-fn)
-  (cond
-    ((null lst) nil)  
-    ((funcall test-fn elem (car lst)) t) 
-    (t (contains test-fn elem (cdr lst))))
-) 
-
-(defun escapedp (obj)
-	(if (member obj '(* / + -) :test #'eq)
-      nil
-  (and (symbolp obj)
-       (some #'(lambda (c)
-                 (or (and (char>= c #\a) (char<= c #\z))  ; minuscole
-                     (not (alphanumericp c))))            ; o carattere non alfanumerico
-             (coerce (symbol-name obj) 'list))))
-)  
-
-(defun prefixp (sub str)
-  (and (<= (length sub) (length str))
-       (equal sub (subseq str 0 (length sub)))
-  )
-)
-
-(defun calc-coeff (obj)
-	(if (member obj (unit-symbols) :test #'equal)
-		1
-		(calc-coeff-ord (symbol-name obj))
-	)
-)
-
-(defun calc-coeff-ord (str)
-  (let ((matches 
-          (remove-if-not
-            (lambda (pair)
-              (prefixp (car pair) str))
-            *prefixes*)))
-    (if matches
-        ;; prendi il prefisso più lungo
-        (let* ((best (reduce (lambda (a b)
-                               (if (> (length (car a)) (length (car b))) a b))
-                             matches))
-               (prefisso (car best))
-               (valore (cdr best))
-               (resto (subseq str (length prefisso))))
-          valore)
-        ;; se non c'è prefisso, ritorna (str . 1)
-        (cons str 1))))
-        
-        
-(defun prefix-free (obj)
-	(if (member obj (unit-symbols) :test #'equal)
-		obj
-		(trova (symbol-name obj))
-	)
-)
-
-(defun trova (str)
-  (let ((matches
-          (remove-if-not
-           (lambda (pair)
-             (prefixp (car pair) str))
-           *prefixes*)))
-    (if matches
-        (let* ((best (reduce (lambda (a b)
-                               (if (> (length (car a)) (length (car b))) a b))
-                             matches))
-               (prefisso (car best))
-               (valore (cdr best))
-               (resto (subseq str (length prefisso))))
-          (let ((unit-symbol
-                 (find-if (lambda (sym)
-                            (string= (symbol-name sym) resto))
-                          (unit-symbols))))
-            (when unit-symbol
-              unit-symbol)))
-        ;; Se non c'è prefisso, prova a trovare direttamente il simbolo
-        (find-if (lambda (sym)
-                   (string= (symbol-name sym) str))
-                 (unit-symbols)))))    
-        
-        
-(defun sostituisci-units (expr)
-  (cond
-    ;; Caso simbolo tra pipeline: sostituisci
-    ((and (symbolp expr) (escapedp expr))
-     (prefix-free expr))
-    
-    ;; Caso lista non vuota: processa car e poi ricorsivamente cdr
-    ((consp expr)
-     (cons (sostituisci-units (car expr))
-           (sostituisci-units (cdr expr))))
-    
-    ;; Altrimenti: restituisci l’elemento così com'è
-    (t expr)))
-
-(defun calc-units (expr)
-  (cond
-    ;; Caso simbolo tra pipeline: sostituisci
-    ((and (symbolp expr) (escapedp expr))
-     (calc-coeff expr))
-    
-    ;; Caso lista non vuota: processa car e poi ricorsivamente cdr
-    ((consp expr)
-     (* (calc-units (car expr))
-           (calc-units (cdr expr))))
-    
-    ;; Altrimenti: restituisci l’elemento così com'è
-    (t 1))
-)
-
-(defun uniform-quantity (q)
+(defun q (N D)
 	(list 
-		(* (calc-units (third q)) (second q))  
-		(sostituisci-units (third q)) 
+		'q 
+		(* N (extract-numeric-factor (norm D))) 
+		(remove-prefixes D))
+)
+
+(defun q-val (Q)
+	(if (is-quantity Q) (second Q) NIL)
+)
+
+(defun q-dim (Q)
+	(if (is-quantity Q) (third Q) NIL) 
+)
+
+
+(defun qnegate (Q)
+	(unless (is-quantity Q)
+		(error "ERROR: Invalid argument"))
+	(q (- (q-val Q)) (q-dim Q)) 
+)
+
+
+(defun qinverse (Q)
+	(unless (is-quantity Q)
+		(error "ERROR: Invalid argument"))
+	(q (/ 1 (q-val Q)) (norm (list 'expt (q-dim Q) -1))) 
+)
+
+
+(defun qadd (Q1 Q2)
+
+	(unless (and (is-quantity Q1) (is-quantity Q2))
+		(error "ERROR: At least one of the two arguments is not a valid quantity"))
+
+	(if (equal (q-dim Q1) (q-dim Q2))
+
+		(let ((res (q (+ (q-val Q1) (q-val Q2)) (q-dim Q1) )))
+			(if (is-quantity res)
+			res
+			(error "ERROR: The result is not a valid quantity ~A" res)))
+		
+		(error "ERROR: Incompatible dimensions ~A and ~A" (q-dim Q1) (q-dim Q2))
 	)
 )
 
-;; Test 1
-;(print (calc-units '|km|))
-;; Output atteso: (|km|)
+(defun qsub (Q1 Q2)
+  (qadd Q1 (qnegate Q2))
+)
 
-;; Test 2
-;(print (calc-units '(* |km| |m| |s|)))
-;; Output atteso: (|km| |m| |s|)
 
-;; Test 3
-;(print (sostituisci-units '(expn |km| 2)))
-;; Output atteso: (|km|)
+(defun qmul (Q1 Q2)
+	(unless (and (is-quantity Q1) (is-quantity Q2))
+    	(error "ERROR: At least one of the two arguments is not a valid quantity"))
 
-;; Test 4
-;(print (sostituisci-units '(* (expn |km| 2) |s|)))
-;; Output atteso: (|km| |s|)
+	(let ((res 
+		(q 
+			(* (q-val Q1) (q-val Q2))  
+			(norm (list '* (q-dim Q1) (q-dim Q2)))
+		)))
+      
+        (unless (is-quantity res)
+			(error "ERROR: The result is not a valid quantity ~A" res))
+			
+		res
+	)
+)
+        
+(defun qdiv (Q1 Q2)
+	(unless (is-quantity Q2)
+		(error "ERROR: Divider is not a valid quantity"))
+	(when (= (q-val Q2) 0)
+		(error "ERROR: Division by zero"))
+	(qmul Q1 (qinverse Q2))
+)
 
-;; Test 5
-;(print (sostituisci-units '(* |kT| |km| |s|)))
-;; Output atteso: (|km| |s|)
+(defun qexp (Q N)
+	(unless (and (is-quantity Q) (numberp N))
+		(error "ERROR: Invalid arguments"))
+	(q 
+		(expt (q-val Q) N) 
+		(norm (list 'expt (q-dim Q) N)))
+)	
 
-;; Test 6
-;(print (sostituisci-units '(+ 3 5)))
-;; Output atteso: NIL
 
-;; Test 7
-;(print (sostituisci-units '(/ (expn |m| 3) (* |s| |km|))))
-;; Output atteso: (|m| |s| |km|)
+(defun prefixed-factor (unit)
+  "Returns the numerical factor associated with the unit prefix 
+  or 1 if there is no prefix or it is a base/derived unit"
+	(let ((prefix (prefix-match unit)))
+		(if (and prefix (not (member prefix (unit-symbols))))
+        	(cdr (assoc prefix *prefixes*))
+        	1
+    	)
+	)
+)
 
-;(print (uniform-quantity '(q 2 (* |s| |km| ) ) ) )
+; ---- MANCA ----
+(defun extract-numeric-factor (dim)
+  "Estrae ricorsivamente il fattore numerico associato ai prefissi in un'espressione dimensionale."
+  (cond
+    ;; Caso base: simbolo singolo
+    ((symbolp dim)
+     (prefixed-factor dim))
+
+    ;; Caso: (expt unit exp)
+    ((and (consp dim) (eq (first dim) 'expt))
+     (let ((base (extract-numeric-factor (second dim)))
+           (exp (third dim)))
+       (expt base exp)))
+
+    ;; Caso: (* a b c ...)
+    ((and (consp dim) (eq (first dim) '*))
+     (extract-mul-factor (rest dim)))
+
+    ;; Altro: ritorna 1 per sicurezza
+    (t 1)))
+
+; ---- MANCA ----
+(defun extract-mul-factor (terms)
+  "Estrae ricorsivamente il prodotto dei fattori da una lista di termini."
+  (if (null terms)
+      1
+      (* (extract-numeric-factor (first terms))
+         (extract-mul-factor (rest terms)))))
+
+; ---- MANCA ----
+(defun remove-prefixes (expr)
+	(cond
+		;; caso base, è una singola unità o numero
+		((atom expr) 
+			
+			(prefix-free expr))
+		
+		;; caso esponente: (EXPT unit exp)
+		((and (listp expr)
+		 (eq (first expr) 'expt))
+		
+			(list 'expt (prefix-free (second expr)) (third expr)))
+
+		;;; caso prodotto: (* elem1 elem2 ...)
+		((and (listp expr)
+		 (eq (first expr) '*))
+		
+			(cons '* (mapcar #'remove-prefixes (rest expr))))
+		
+		(t expr)
+	)
+)
+
+
+
+
+
 
 
 
