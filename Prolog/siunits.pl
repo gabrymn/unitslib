@@ -307,18 +307,13 @@ qadd(q(V1, D1), q(V2, D2), q(VR, DR)) :-
     is_quantity(q(V2_R, D2_R)),
     D1_R == D2_R,
     VR is V1_R + V2_R,
-    DR = D1_R.
+    DR = D1_R,
+	is_quantity(q(VR, DR)).
 	
 qsub(q(V1, D1), q(V2, D2), q(VR, DR)) :-
-
-    play(q(V1, D1), q(V1_R, D1_R)),
-    play(q(V2, D2), q(V2_R, D2_R)),
-    is_quantity(q(V1_R, D1_R)),
-    is_quantity(q(V2_R, D2_R)),
-    D1_R == D2_R,
-    VR is V1_R - V2_R,
-    DR = D1_R,
-    is_quantity(q(VR, DR)).
+	NV2 is -V2,
+	qadd(q(V1, D1), q(NV2, D2), q(VR, DR)).
+	
 		
 qmul(q(V1, D1), q(V2, D2), q(VR, DR)) :-
 
@@ -331,14 +326,10 @@ qmul(q(V1, D1), q(V2, D2), q(VR, DR)) :-
     is_quantity(q(VR, DR)).	
 
 qdiv(q(V1, D1), q(V2, D2), q(VR, DR)) :-
-
-    play(q(V1, D1), q(V1_R, D1_R)),
-    play(q(V2, D2), q(V2_R, D2_R)),
-    is_quantity(q(V1_R, D1_R)),
-    is_quantity(q(V2_R, D2_R)),
-    VR is V1_R / V2_R,
-    norm(D1_R * (D2_R ** -1), DR),
-    is_quantity(q(VR, DR)).
+	
+	V2 =\= 0,
+	InvV2 is 1 / V2,
+	qmul(q(V1, D1), q(InvV2, D2 ** -1), q(VR, DR)).  % fallisce perché bisogna implementare la gestione di unità complesse, per esempio    [  D2 ** -1  <=>  m ** -1  ]    fallisce
 
 qexp(q(V1, D1), N, q(VR, DR)) :-
 	
@@ -350,6 +341,19 @@ qexp(q(V1, D1), N, q(VR, DR)) :-
 	is_quantity(q(VR, DR)).
 	
 	
+%%% come implementare gestione unità complesse:
+%%% creare un predicato: 
+/*
 	
+	prefixfree(unità complessa, unità complessa uniforme, coefficente molt-accumulativo) 
+	
+		1) conversione unità complessa in lista
+		2) per ogni unità con prefisso individuata si moltiplica per il coefficente e si mantiene l'accumulatore
+		3) convertire la lista in unità complessa (che non è ancora in forma canonica)
+
+
+
+
+
 
 
