@@ -47,6 +47,10 @@ L'inversione di un'unità corrisponde al cambio di segno del vettore esponenti: 
 
 L’unità adimensionale corrisponde al vettore nullo: $(0,0,0,0,0,0,0)$.
 
-Osservazione: $U \cong \mathbb{Z}^7$
+Quindi $U$ è isomorfo a $\mathbb{Z}^7$  ($U \cong \mathbb{Z}^7$)
 
-
+L’intuizione è che ogni unità di misura base o derivata può essere rappresentata come un vettore a sette componenti. <br>
+Moltiplicare due unità equivale a sommare i rispettivi vettori,<br>
+invertire un’unità significa cambiare il segno di tutte le componenti del vettore,<br> 
+e moltiplicare un’unità per l’unità adimensionale 1 corrisponde a sommare il vettore con il vettore nullo (0,0,0,0,0,0,0).<br>
+In questo modo tutte le operazioni sulle unità si riducono a semplici operazioni aritmetiche sui vettori. 
